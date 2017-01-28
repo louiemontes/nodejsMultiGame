@@ -1,2 +1,14 @@
 Hello world
-afsdsfdsfsfsdfsdf
+
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script>
+  var socket = io();
+  var random = Math.random();
+  var happy = function() {
+    socket.emit('happy', {
+      reason: "its my birthday" + random
+    });
+  };
+</script>
+
+<button onclick="happy()">Happy</button>
