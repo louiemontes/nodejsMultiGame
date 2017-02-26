@@ -163,12 +163,49 @@ Bullet.update = function() {
   }
   return pack;
 }
+
+var USERS = {
+
+}
+
+var isValidPassword = function(data) {
+  return USERS[data.username] === data.password;
+}
+var isUsernameTaken = function(data) {
+  return USERS[data.username];
+}
+var addUser = function(data) {
+  USERS[data.username] = data.password;
+}
+
+
 var io = require('socket.io')(serv, {});
 io.sockets.on('connection', function(socket){
   socket.id = Math.random();
   SOCKET_LIST[socket.id] = socket;
 
-  Player.onConnect(socket);
+  socket.on('signIn', function(data){
+    if (isValidPassword(data)) {
+      Player.onConnect(socket);
+      socket.emit("signInResponse", {success:true});
+    } else {
+      socket.emit("signInResponse", {success: false});
+    }
+  });
+  socket.on('signUp', function(data){
+    if (isUsernameTaken(data)) {
+      socket.emit("signUpResponse", {success:false});
+    } else {
+      addUser(data);
+      socket.emit("signUpResponse", {success:true});
+    }
+  });
+
+
+  socket.on('disconnect', function(){
+    delete SOCKET_LIST[socket.id];
+    Player.onDisconnect(socket);
+  });
 
   socket.on('sendMsgToServer', function(data){
     var playerName = ("" + socket.id).slice(2,7);
@@ -182,10 +219,6 @@ io.sockets.on('connection', function(socket){
     socket.emit("evalAnswer", res);
   });
 
-  socket.on('disconnect', function(){
-    delete SOCKET_LIST[socket.id];
-    Player.onDisconnect(socket);
-  });
 });
 
 setInterval(function() {
